@@ -1,8 +1,12 @@
+import random
 import uuid
+from datetime import timedelta, datetime
 
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Permission, Group
 from django.core.validators import FileExtensionValidator
 from django.db import models
+
+
 
 ORDINARY_USER, MANAGER, ADMIN = ('ordinary_user', 'manager', 'admin')
 VIA_PHONE = 'via_phone'
@@ -23,7 +27,7 @@ class User(AbstractUser, BaseModel):
         (ADMIN, ADMIN)
     )
     AUTH_TYPE = (
-        (VIA_PHONE, VIA_PHONE)
+        (VIA_PHONE, 'Via Phone'),
     )
     AUTH_STATUS = (
         (NEW, NEW),
@@ -39,8 +43,59 @@ class User(AbstractUser, BaseModel):
     photo = models.ImageField(upload_to='user_photos/', null=True, blank=True,
                               validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'heic', 'heif'])])
 
+    groups = models.ManyToManyField(
+        Group,
+        related_name='custom_user_groups',
+        blank=True,
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        related_name='custom_user_permissions',
+        blank=True,
+    )
 
 
     def __str__(self):
         return self.username
 
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
+
+    def create_verify_code(self, verify_type):
+        code = "".join([str(random.randint(0,100)%10)for _ in range(4)])
+        UserConfirmation.objects.create(
+            user_id = self.id,
+            verify_type = verify_type,
+            code = code
+        )
+        return code
+
+    def check_username(self):
+        if not self.username:
+            temp_username = f"instagram-{uuid.uuid4().__str__().split('-')[-1]}"
+            while User.objects.filter(username=temp_username):
+                temp_username = f"{temp_username}{random.randint(0,9)}"
+            self.username = temp_username
+
+
+
+
+PHOTO_EXPIRE = 2
+
+class UserConfirmation(BaseModel):
+    TYPE_CHOICES = (
+        (VIA_PHONE, "Via Phone"),
+    )
+    code = models.CharField(max_length=4)
+    verify_type = models.CharField(max_length=31, choices=TYPE_CHOICES)
+    user = models.ForeignKey('users.User', models.CASCADE, related_name='verify_codes')
+    expiration_time = models.DateTimeField(null=True)
+    is_confirmed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.user.__str__())
+
+    def save(self, *args, **kwargs):
+        self.expiration_time = datetime.now() + timedelta(minutes=PHOTO_EXPIRE)
+        super(UserConfirmation, self).save(*args, **kwargs)

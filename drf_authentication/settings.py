@@ -73,7 +73,7 @@ WSGI_APPLICATION = "drf_authentication.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_pcycopg2",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": config("DB_NAME"),
         "USER": config("USER"),
         "PASSWORD": config("PASSWORD"),
