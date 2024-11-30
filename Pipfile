@@ -12,6 +12,7 @@ python-decouple = "*"
 psycopg2 = "*"
 pygments = "*"
 psycopg2-binary = "*"
+djangorestframework-simplejwt = "*"
 
 [dev-packages]
 
