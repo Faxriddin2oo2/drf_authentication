@@ -13,6 +13,8 @@ psycopg2 = "*"
 pygments = "*"
 psycopg2-binary = "*"
 djangorestframework-simplejwt = "*"
+django-phonenumber-field = "*"
+phonenumbers = "*"
 
 [dev-packages]
 
