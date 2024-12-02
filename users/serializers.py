@@ -1,5 +1,8 @@
 from rest_framework import serializers
 from .models import User, VIA_PHONE
+from .utility import phone_is_valid
+
+from rest_framework.exceptions import ValidationError
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -38,3 +41,34 @@ class SignUpSerializer(serializers.ModelSerializer):
     @staticmethod
     def auth_validate(data):
         user_input = str(data.get('phone_number'))
+        input_type = phone_is_valid(user_input)
+        if input_type == 'phone':
+            data = {
+                'phone_number': user_input,
+                'auth_type': VIA_PHONE
+            }
+        else:
+            data = {
+                'success': False,
+                'message': "You must send phone number"
+            }
+            raise ValidationError(data)
+
+        return data
+
+    def validate_phone_number(self, value):
+        value = value.lower()
+        if value and User.objects.filter(phone_number=value).exists():
+            data = {
+                "success" : False,
+                'message' : "Bu telefon raqami allaqachon ma'lumotlar bazasida bor"
+            }
+            raise ValidationError(data)
+
+        return value
+
+    def to_representation(self, instance):
+        data = super(SignUpSerializer, self).to_representation(instance)
+        data.update(instance.token())
+
+        return data
