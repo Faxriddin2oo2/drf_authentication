@@ -78,6 +78,15 @@ class User(AbstractUser, BaseModel):
                 temp_username = f"{temp_username}{random.randint(0,9)}"
             self.username = temp_username
 
+    def check_pass(self):
+        if not self.password:
+            temp_password = f'password - {uuid.uuid4().__str__().split("-")[-1]}'
+
+    def hashing_password(self):
+        if not self.password.startswith('pbkdf2_sha256'):
+            self.set_password(self.password)
+
+
 
 
 
