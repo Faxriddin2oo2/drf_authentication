@@ -141,15 +141,15 @@ class ChangeUserInformation(serializers.Serializer):
 
         return last_name
 
-    def update(self, instance, validated_data):
-
-        instance.first_name = validated_data.get('first_name', instance.first_name)
-        instance.last_name = validated_data.get('last_name', instance.last_name)
-        instance.password = validated_data.get('password', instance.password)
-        instance.username = validated_data.get('username', instance.username)
-        if validated_data.get('password'):
-            instance.set_password(validated_data.get('password'))
-        if instance.auth_status == CODE_VERIFIED:
-            instance.auth_status = DONE
-        instance.save()
-        return instance
+    # def update(self, instance, validated_data):
+    #
+    #     instance.first_name = validated_data.get('first_name', instance.first_name)
+    #     instance.last_name = validated_data.get('last_name', instance.last_name)
+    #     instance.password = validated_data.get('password', instance.password)
+    #     instance.username = validated_data.get('username', instance.username)
+    #     if validated_data.get('password'):
+    #         instance.set_password(validated_data.get('password'))
+    #     if instance.auth_status == CODE_VERIFIED:
+    #         instance.auth_status = DONE
+    #     instance.save()
+    #     return instance
