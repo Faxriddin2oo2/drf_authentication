@@ -1,8 +1,9 @@
 from django.contrib.auth.password_validation import validate_password
+from django.core.validators import FileExtensionValidator
 from rest_framework import serializers
-from wx.lib.docview import DOC_NEW
 
-from .models import User, VIA_PHONE, CODE_VERIFIED, DONE
+
+from .models import User, VIA_PHONE, CODE_VERIFIED, DONE, PHOTO_DONE
 from .utility import phone_is_valid
 
 from rest_framework.exceptions import ValidationError
@@ -154,3 +155,15 @@ class ChangeUserInformation(serializers.Serializer):
         instance.save()
         return instance
 
+class ChangeUserPhotoSerializer(serializers.Serializer):
+    photo = serializers.ImageField(validators=[FileExtensionValidator(allowed_extensions=[
+        'jpg', 'jpeg', 'png', 'heic', 'heif'
+    ])])
+
+    def update(self, instance, validated_data):
+        photo = validated_data.get('photo')
+        if photo:
+            instance.photo = photo
+            instance.auth_status = PHOTO_DONE
+            instance.save()
+        return instance
