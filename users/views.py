@@ -1,9 +1,11 @@
+from intake.container.serializer import serializers
 from rest_framework.response import Response
 from rest_framework import permissions
 from rest_framework.generics import CreateAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
-from users.serializers import SignUpSerializer, ChangeUserInformation
+from users.serializers import SignUpSerializer, ChangeUserInformation, ChangeUserPhotoSerializer
 from .models import User
 
 
@@ -38,3 +40,18 @@ class ChangeUserInformationView(UpdateAPIView):
             'auth_status': self.request.user.auth_status
         }
         return Response(data, status=200)
+
+
+class ChangeUserPhotoView(APIView):
+    permission_classes = [IsAuthenticated, ]
+    def put(self, request, *args, **kwargs):
+        serializer = ChangeUserPhotoSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            serializer.update(user, serializer.validated_data)
+            return Response({
+                'image' : "Rasm muvaffaqiyatli o'zgartirildi"
+            }, status=200)
+        return Response(
+            serializer.errors, status=400
+        )
