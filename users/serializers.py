@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 
 from .models import User, VIA_PHONE, CODE_VERIFIED, DONE, PHOTO_DONE
-from .utility import phone_is_valid
+from .utility import phone_is_valid, send_email
 
 from rest_framework.exceptions import ValidationError
 
@@ -28,12 +28,12 @@ class SignUpSerializer(serializers.ModelSerializer):
             "auth_status" : {'read_only':True, 'required':False},
         }
 
-    # def create(self, validated_data):
-    #     user = super(SignUpSerializer, self).create(validated_data)
-    #     code = user.create_verify_code(VIA_PHONE)
-    #     send_email(user.phone_number, code)
-    #     user.save()
-    #     return user
+    def create(self, validated_data):
+        user = super(SignUpSerializer, self).create(validated_data)
+        code = user.create_verify_code(VIA_PHONE)
+        send_email(user.phone_number, code)
+        user.save()
+        return user
 
 
     def validate(self, data):
