@@ -13,7 +13,7 @@ class SignUpSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(read_only=True)
 
     def __init__(self, *args, **kwargs):
-        super(SignUpSerializer).__init__(*args, **kwargs)
+        super(SignUpSerializer, self).__init__(*args, **kwargs)
         self.fields['phone_number'] = serializers.CharField(required=False)
 
     class Meta:
