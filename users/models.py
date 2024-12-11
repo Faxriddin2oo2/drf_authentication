@@ -2,6 +2,7 @@ import random
 import uuid
 from datetime import timedelta, datetime
 
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import AbstractUser, Permission, Group
 from django.core.validators import FileExtensionValidator
 from django.db import models
@@ -86,6 +87,12 @@ class User(AbstractUser, BaseModel):
         if not self.password.startswith('pbkdf2_sha256'):
             self.set_password(self.password)
 
+    def token(self):
+        refresh = RefreshToken.for_user(self)
+        return {
+            "access": str(refresh.access_token),
+            "refresh_token": str(refresh)
+        }
 
 
 

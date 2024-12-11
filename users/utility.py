@@ -10,18 +10,35 @@ from rest_framework.exceptions import ValidationError
 phone_regex = re.compile(r"(\+[0-9]+\s*)?(\([0-9]+\))?[\s0-9\-]+[0-9]+")
 username_regex = re.compile(r"^[a-zA-Z0-9_.-]+$")
 
-def phone_is_valid(phone):
-    phone_numer = phonenumbers.parse(phone)
-    if phonenumbers.is_valid_number(phone):
-        phone = 'phone'
-    else:
-        data = {
-            "success" : False,
-            "message" : "Email yoki telefon raqamingiz notog'ri"
-        }
-        raise ValidationError(data)
+# def phone_is_valid(phone):
+#     # phone_numer = phonenumbers.parse(phone)
+#     if phonenumbers.is_valid_number(phone):
+#         phone = 'phone'
+#     else:
+#         data = {
+#             "success" : False,
+#             "message" : "Email yoki telefon raqamingiz notog'ri"
+#         }
+#         raise ValidationError(data)
+#
+#     return phone
 
-    return phone
+def phone_is_valid(phone):
+    try:
+        # Parse the phone number string into a PhoneNumber object
+        parsed_phone = phonenumbers.parse(phone, None)  # Provide the default region if needed
+        if phonenumbers.is_valid_number(parsed_phone):
+            return 'phone'
+        else:
+            raise ValidationError({
+                "success": False,
+                "message": "Email yoki telefon raqamingiz notog'ri"
+            })
+    except phonenumbers.NumberParseException:
+        raise ValidationError({
+            "success": False,
+            "message": "Telefon raqami noto‘g‘ri formatda"
+        })
 
 
 def check_user_type(user_input):
@@ -52,7 +69,7 @@ class Email:
         email = EmailMessage(
             subject=data['subject'],
             body=data['body'],
-            to=data['to_email']
+            to=[data['to_email']]
         )
         if data.get('content_type') == 'html':
             email.content_subtype = 'html'

@@ -43,22 +43,37 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 
     @staticmethod
+    # def auth_validate(data):
+    #     user_input = str(data.get('phone_number'))
+    #     input_type = phone_is_valid(user_input)
+    #     if input_type == 'phone':
+    #         data = {
+    #             'phone_number': user_input,
+    #             'auth_type': VIA_PHONE
+    #         }
+    #     else:
+    #         data = {
+    #             'success': False,
+    #             'message': "You must send phone number"
+    #         }
+    #         raise ValidationError(data)
+    #
+    #     return data
+
     def auth_validate(data):
-        user_input = str(data.get('phone_number'))
+        user_input = str(data.get('phone_number')).strip()  # Ensure input is cleaned
         input_type = phone_is_valid(user_input)
+
         if input_type == 'phone':
-            data = {
+            return {
                 'phone_number': user_input,
                 'auth_type': VIA_PHONE
             }
         else:
-            data = {
-                'success': False,
-                'message': "You must send phone number"
-            }
-            raise ValidationError(data)
-
-        return data
+            raise ValidationError({
+                "success": False,
+                "message": "You must send a valid phone number"
+            })
 
     def validate_phone_number(self, value):
         value = value.lower()
