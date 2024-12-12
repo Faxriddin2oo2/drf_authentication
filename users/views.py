@@ -46,7 +46,7 @@ class VerifyAPIView(APIView):
             raise ValidationError
         else:
             verifies.update(is_confirmed=True)
-        if user.auth_type == NEW:
+        if user.auth_status == NEW:
             user.auth_status = CODE_VERIFIED
             user.save()
         return True
