@@ -1,12 +1,17 @@
+from Demos.win32ts_logoff_disconnected import username
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import FileExtensionValidator
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import AccessToken
 
+from .models import User, VIA_PHONE, CODE_VERIFIED, DONE, PHOTO_DONE, NEW
+from .utility import phone_is_valid, send_email, check_user_type
 
-from .models import User, VIA_PHONE, CODE_VERIFIED, DONE, PHOTO_DONE
-from .utility import phone_is_valid, send_email
-
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -182,3 +187,82 @@ class ChangeUserPhotoSerializer(serializers.Serializer):
             instance.auth_status = PHOTO_DONE
             instance.save()
         return instance
+
+
+class LoginSerializer(TokenObtainSerializer):
+
+    def __init__(self, *args, **kwargs):
+        super(LoginSerializer, self).__init__(*args, **kwargs)
+        self.fields['userinput'] = serializers.CharField(required=True)
+        self.fields['username'] = serializers.CharField(required=False, read_only=True)
+
+    def auth_validate(self, data):
+        user_input = data.get('userinput') # phone_number, username
+        if check_user_type(user_input) == 'username':
+            username = user_input
+        elif check_user_type(user_input) == 'phone':
+            user = self.get_user(phone_number=user_input)
+            username = user.username
+        else:
+            data = {
+                "success" : True,
+                "message" : "Siz username yoki telefon raqami jo'natishingiz kerak"
+            }
+            raise ValidationError(data)
+
+        authentication_kwargs = {
+            self.username_field: username,
+            'password' : data['password']
+        }
+        # user statusi tekshirilishi kerak
+        current_user = User.objects.filter(username__iexact=username).first()
+        if current_user is not None and current_user.auth_status in [NEW, CODE_VERIFIED]:
+            raise ValidationError(
+                {
+                    'success' : False,
+                    'message' : "Siz ro'yhatdan to'liq o'tmagansiz!"
+                }
+            )
+        user = authenticate(**authentication_kwargs)
+        if user is not None:
+            self.user = user
+        else:
+            raise ValidationError(
+                {
+                    'success': False,
+                    'message': "Sorry, login or password you entered is incorrect. Please check and try again!"
+                }
+            )
+    def validate(self, data):
+        self.auth_validate(data)
+        if self.user.auth_status not in [DONE, PHOTO_DONE]:
+            raise PermissionDenied("Siz login qila olmaysiz. Ruxsatingiz yo'q")
+        data = self.user.token()
+        data['auth_status'] = self.user.auth_status
+        data['full_name'] = self.user.full_name
+        return data
+
+    def get_user(self, **kwargs):
+        users = User.objects.filter(**kwargs)
+        if not users.exists():
+            raise ValidationError(
+                {
+                    "message" : "No active account found"
+                }
+            )
+        return users.first()
+
+
+class LoginRefreshSerializer(TokenRefreshSerializer):
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        access_token_instance = AccessToken(data['access'])
+        user_id = access_token_instance['user_id']
+        user = get_object_or_404(User, id=user_id)
+        update_last_login(None, user)
+        return data
+
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
