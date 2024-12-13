@@ -14,7 +14,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from users.serializers import SignUpSerializer, ChangeUserInformation, ChangeUserPhotoSerializer, LoginSerializer, \
     LoginRefreshSerializer, LogoutSerializer, ResetPasswordSerializer, ForgotPasswordSerializer
 from .models import User, CODE_VERIFIED, NEW, VIA_PHONE
-from .utility import send_email
+from .utility import send_email, phone_is_valid
 
 
 class CreateUserView(CreateAPIView):
@@ -165,19 +165,19 @@ class ForgotPasswordView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=self.request.data)
         serializer.is_valid(raise_exception=True)
-        valid_phone = serializer.validated_data.get('email_or_phone')
+        valid_phone = serializer.validated_data.get('valid_phone')
         user = serializer.validated_data.get('user')
-        if valid_phone(valid_phone) == 'phone':
+        if phone_is_valid(valid_phone) == 'phone':
             code = user.create_verify_code(VIA_PHONE)
             send_email(valid_phone, code)
 
         return Response(
             {
                 "success" : True,
-                "message" : "Tasdilash kodi muvaffaqiyatli yuborildi",
+                "message" : "Tasdiqlash kodi muvaffaqiyatli yuborildi",
                 "access" : user.token()['access'],
                 "refresh" : user.token()['refresh_token'],
-                'user_status': user.auth_status,
+                "user_status" : user.auth_status,
             }, status=200
         )
 

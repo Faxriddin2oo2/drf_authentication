@@ -1,5 +1,3 @@
-from Demos.win32ts_logoff_disconnected import username
-from PyQt5.QtCore.QUrl import password
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
@@ -282,7 +280,7 @@ class ForgotPasswordSerializer(serializers.Serializer):
                     "message": "Telefon raqami kiritilishi shart!"
                 }
             )
-        user = User.objects.fitler(Q(phone_number=valid_phone))
+        user = User.objects.filter(Q(phone_number=valid_phone))
         if not user.exists():
             raise NotFound(detail="User not found")
         attrs['user'] = user.first()
