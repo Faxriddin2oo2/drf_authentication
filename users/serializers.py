@@ -6,12 +6,13 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.exceptions import ValidationError, PermissionDenied, NotFound
+
 
 from .models import User, VIA_PHONE, CODE_VERIFIED, DONE, PHOTO_DONE, NEW
 from django.db.models import Q
 from .utility import phone_is_valid, send_email, check_user_type
 
-from rest_framework.exceptions import ValidationError, PermissionDenied, NotFound
 
 
 class SignUpSerializer(serializers.ModelSerializer):
